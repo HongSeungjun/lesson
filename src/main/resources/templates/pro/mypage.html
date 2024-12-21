@@ -1,0 +1,437 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout/default}">
+<div class="content-wrapper" layout:fragment="content">
+    <!-- Content Header (Page header) -->
+    <section class="content-header">
+        <div class="container-fluid">
+            <div class="row mb-2">
+                <div class="col-sm-6">
+                    <h1>마이페이지</h1>
+                </div>
+                <div class="col-sm-6">
+                    <ol class="breadcrumb float-sm-right">
+                        <li class="breadcrumb-item"><a href="#">Home</a></li>
+                        <li class="breadcrumb-item active">마이페이지</li>
+                    </ol>
+                </div>
+            </div>
+        </div><!-- /.container-fluid -->
+    </section>
+
+    <!-- Main content -->
+    <section class="content">
+        <div class="container-fluid">
+            <div class="row">
+                <div class="col-md-3">
+
+                    <!-- Profile Image -->
+                    <div class="card card-primary card-outline">
+                        <div class="card-body box-profile">
+                            <div class="text-center">
+                                <img class="profile-user-img img-fluid img-circle"
+                                     src="../../dist/img/profile1.jpg"
+                                     alt="User profile picture">
+                            </div>
+
+                            <h3 class="profile-username text-center">이름</h3>
+
+                            <p class="text-muted text-center">소개</p>
+
+                            <ul class="list-group list-group-unbordered mb-3">
+                                <li class="list-group-item">
+                                    <b>평점</b> <a class="float-right"></a>
+                                </li>
+                                <li class="list-group-item">
+                                    <b>연락처</b> <a class="float-right"></a>
+                                </li>
+                            </ul>
+
+                        </div>
+                        <!-- /.card-body -->
+                    </div>
+                    <!-- /.card -->
+                    <div class="card">
+                        <div class="card-header p-2">
+                            <ul class="nav nav-pills">
+                                <li class="nav-item"><a class="nav-link active " href="#timeline"
+                                                        data-toggle="tab">수업일정</a>
+                                </li>
+                                <li class="nav-item"><a class="nav-link" href="#settings" data-toggle="tab">개인정보 설정</a>
+                                </li>
+                            </ul>
+                        </div><!-- /.card-header -->
+                        <div class="card-body">
+                            <div class="tab-content">
+                                <!-- /.tab-pane -->
+                                <div class="active tab-pane" id="timeline">
+                                    <!-- The timeline -->
+                                    <div class="timeline timeline-inverse">
+                                        <!-- timeline time label -->
+                                    </div>
+                                </div>
+                                <!-- /.tab-pane -->
+
+                                <div class="tab-pane" id="settings">
+                                    <form class="form-horizontal">
+                                        <div class="form-group row">
+                                            <label for="userName" class="col-sm-2 col-form-label">이름</label>
+                                            <div class="col-sm-10">
+                                                <input type="email" class="form-control" id="userName"
+                                                       placeholder="Name">
+                                            </div>
+                                        </div>
+                                        <div class="form-group row">
+                                            <label for="comment" class="col-sm-2 col-form-label">소개</label>
+                                            <div class="col-sm-10">
+                                                <textarea class="form-control" id="comment"
+                                                          placeholder="Experience"></textarea>
+                                            </div>
+                                        </div>
+                                        <div class="form-group row">
+                                            <label for="tel" class="col-sm-2 col-form-label">연락처</label>
+                                            <div class="col-sm-10">
+                                                <input type="text" class="form-control" id="tel"
+                                                       placeholder="Name">
+                                            </div>
+                                        </div>
+                                        <div class="form-group row">
+                                            <div class="offset-sm-2 col-sm-10">
+                                                <button type="submit" class="btn btn-danger">저장</button>
+                                            </div>
+                                        </div>
+                                    </form>
+                                </div>
+                                <!-- /.tab-pane -->
+                            </div>
+                            <!-- /.tab-content -->
+                        </div><!-- /.card-body -->
+                    </div>
+
+                    <!-- /.card -->
+                </div>
+                <!-- /.col -->
+                <div class="col-md-9">
+                    <div class="card card-primary">
+                        <div class="card-body p-0">
+                            <!-- THE CALENDAR -->
+                            <div id="calendar"></div>
+                        </div>
+                        <!-- /.card-body -->
+                    </div>
+                </div>
+                <!-- /.col -->
+            </div>
+            <!-- /.row -->
+        </div><!-- /.container-fluid -->
+    </section>
+    <!-- /.content -->
+
+    <!-- Modal -->
+    <div class="modal fade" id="registModal" tabindex="-1" role="dialog" aria-labelledby="registModalLabel"
+         aria-hidden="true">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-body">
+                    <h3>시간을 비활성화 하시겠습니까?</h3>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-primary" id="confirmButton">확인</button>
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal" id="cancelButton">취소</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            $.ajax({
+                url: '/api/user',
+                method: 'GET',
+                success: function (response) {
+                    $('.profile-username').text(response.data.userName);
+                    $('.text-muted').text(response.data.comment);
+                    $('li:contains("연락처")').find('a').text(response.data.tel);
+                    // $('.profile-user-img').attr('src', response.data.profileUrl);
+
+                    $('#userName').val(response.data.userName).prop('disabled', true);
+                    $('#comment').val(response.data.comment);
+                    $('#tel').val(response.data.tel);
+
+                },
+                error: function (error) {
+                    console.log('Error fetching user info:', error);
+                }
+            });
+        });
+
+        document.addEventListener('DOMContentLoaded', function () {
+            // 타임라인 스케줄을 가져오는 API 요청
+            $.ajax({
+                url: '/api/schedule/pro/cond',
+                method: 'GET',
+                success: function (response) {
+                    var schedules = response.data; // API 응답에서 스케줄 데이터 가져오기
+                    var groupedSchedules = groupSchedulesByDate(schedules);
+                    var $timelineContainer = $('.timeline.timeline-inverse');
+
+                    for (var date in groupedSchedules) {
+                        var $timeLabel = $('<div class="time-label"><span class="bg-gradient-gray">' + date + '</span></div>');
+                        $timelineContainer.append($timeLabel); // 날짜 라벨 추가
+
+                        groupedSchedules[date].forEach(function (schedule) {
+                            var $scheduleItem = createScheduleItem(schedule); // 스케줄 아이템 생성
+                            $timelineContainer.append($scheduleItem); // 스케줄 아이템 추가
+                        });
+                    }
+                },
+                error: function (error) {
+                    console.log('Error fetching schedule:', error);
+                }
+            });
+        });
+
+        function groupSchedulesByDate(schedules) {
+            return schedules.reduce(function (acc, schedule) {
+                (acc[schedule.day] = acc[schedule.day] || []).push(schedule);
+                return acc;
+            }, {});
+        }
+
+        function createScheduleItem(schedule) {
+            var $item = $('<div><i class="fas fa-calendar-alt bg-gradient-gray-dark"></i>' +
+                '<div class="timeline-item">' +
+                '<span class="time"><i class="far fa-clock"></i> ' + schedule.time + '</span>' +
+                '<h3 class="timeline-header">' + '<a href ="#">' + schedule.lessonName + '</a> ' + schedule.scheduleName + '</h3></div></div>');
+            return $item;
+        }
+
+        $(document).on('submit', 'form', function (e) {
+            e.preventDefault();
+
+            var updatedComment = $('#comment').val();
+            var updatedTel = $('#tel').val();
+
+            $.ajax({
+                url: '/api/user',
+                method: 'PATCH',
+                contentType: 'application/json',
+                data: JSON.stringify({
+                    comment: updatedComment,
+                    tel: updatedTel
+                }),
+                success: function (response) {
+                    alert('변경되었습니다.');
+                    window.location.reload();
+                },
+                error: function (error) {
+                    console.log('Error updating user info:', error);
+                }
+            });
+        });
+        $(function () {
+            /* initialize the external events
+             -----------------------------------------------------------------*/
+            function ini_events(ele) {
+                ele.each(function () {
+
+                    // create an Event Object (https://fullcalendar.io/docs/event-object)
+                    // it doesn't need to have a start or end
+                    var eventObject = {
+                        title: $.trim($(this).text()) // use the element's text as the event title
+                    }
+
+                    // store the Event Object in the DOM element so we can get to it later
+                    $(this).data('eventObject', eventObject)
+
+                    // make the event draggable using jQuery UI
+                    $(this).draggable({
+                        zIndex: 1070,
+                        revert: true, // will cause the event to go back to its
+                        revertDuration: 0  //  original position after the drag
+                    })
+
+                })
+            }
+
+
+            /* initialize the calendar
+             -----------------------------------------------------------------*/
+            //Date for the calendar events (dummy data)
+            var date = new Date()
+            var d = date.getDate(),
+                m = date.getMonth(),
+                y = date.getFullYear()
+
+            var Calendar = FullCalendar.Calendar;
+
+            var calendarEl = document.getElementById('calendar');
+
+            var selectedStartTime;
+            var selectedEndTime;
+
+            function getNextMonday() {
+                var today = new Date();
+                var nextMonday = new Date();
+                nextMonday.setDate(today.getDate() + (1 + 7 - today.getDay()) % 7);
+                return nextMonday;
+            }
+
+            var calendar = new Calendar(calendarEl, {
+                locale: 'ko', // 한국어 로케일 설정
+                dayHeaderFormat: {weekday: 'short'},
+                firstDay: 1,
+                initialView: 'timeGrid',
+                visibleRange: function (currentDate) {
+                    var start = getNextMonday(); // 다음 월요일을 계산
+                    var end = new Date(start);
+                    end.setDate(start.getDate() + 6); // 주의 끝 (다음 월요일부터 6일 후)
+                    return {start: start, end: end};
+                },
+                allDaySlot: false,
+                headerToolbar: {
+                    left: '',
+                    center: 'title',
+                    right: ''
+                },
+                editable: true,
+                themeSystem: 'bootstrap',
+
+                slotMinTime: '08:00:00',
+                slotMaxTime: '23:00:00',
+                selectable: true,
+                contentHeight: 'auto',
+                eventOverlap: false,
+                select: function (info) {
+
+                    function toLocalISOString(dateString) {
+                        var date = new Date(dateString);
+                        var offset = date.getTimezoneOffset() * 60000; // 로컬 시간대 오프셋
+                        var localISO = new Date(date - offset).toISOString();
+                        return localISO.replace('Z', ''); // 시간대 정보 제거
+                    }
+
+                    selectedStartTime = toLocalISOString(info.startStr);
+                    selectedEndTime = toLocalISOString(info.endStr);
+
+
+                    $('#registModal').modal('show');
+                },
+                eventDrop: function (info) {
+                    updateEvent(info.event);
+                },
+                eventResize: function (info) {
+                    updateEvent(info.event);
+                },
+                eventClick: function (info) {
+                    var eventId = info.event.id;
+
+                    if (confirm('삭제하시겠습니까?')) {
+                        info.event.remove();
+
+                        $.ajax({
+                            url: '/api/unavailableTimes/' + eventId,
+                            type: 'DELETE',
+                            success: function (response) {
+                                console.log('이벤트가 삭제되었습니다.');
+
+                            },
+                            error: function () {
+                            }
+                        });
+                    }
+                },
+                eventColor: '#808080',
+
+                eventContent: function (arg) {
+                    return {html: ''};
+                },
+                events: function (fetchInfo, successCallback, failureCallback) {
+                    $.ajax({
+                        url: '/api/unavailableTimes',
+                        type: 'GET',
+                        success: function(response) {
+                            var events = response.data.map(function(item) {
+                                return {
+                                    id: item.unavailableId,
+                                    daysOfWeek: [item.daysOfWeek],
+                                    startTime: item.startTime,
+                                    endTime: item.endTime
+                                };
+                            });
+                            successCallback(events);
+                        },
+                        error: function() {
+                            failureCallback();
+                        }
+                    });
+                },
+            });
+
+            calendar.render();
+            document.querySelector('.fc-toolbar-title').textContent = '예약 불가 시간 ';
+
+            // 스케줄 수정
+            function updateEvent(event) {
+
+                function toLocalISOString(date) {
+                    var offset = date.getTimezoneOffset() * 60000; // 로컬 시간대 오프셋 (분)
+                    var localISO = new Date(date - offset).toISOString();
+                    return localISO.replace('Z', ''); // 시간대 정보('Z') 제거
+                }
+
+                var eventData = {
+                    // unavailableId: event.extendedProps.unavailableId,
+                    unavailableId: event.id,
+                    startTime: toLocalISOString(event.start),
+                    endTime: event.end ? toLocalISOString(event.end) : null
+                };
+
+                $.ajax({
+                    url: '/api/unavailableTimes',
+                    type: 'PATCH',
+                    contentType: 'application/json',
+                    data: JSON.stringify(eventData),
+                    success: function (response) {
+                        console.log('수정 성공');
+                    },
+                    error: function () {
+                        console.error('Error sending event update to server');
+                    }
+                });
+            }
+
+
+            // 스케줄 등록
+            $(document).ready(function () {
+                $('#registModal .btn-primary').click(registerLesson);
+            });
+
+            function registerLesson() {
+                var data = {
+                    startTime: selectedStartTime,
+                    endTime: selectedEndTime,
+                };
+
+                // AJAX 요청을 사용하여 서버에 데이터 전송
+                $.ajax({
+                    url: '/api/unavailableTimes', // 서버 API 엔드포인트
+                    type: 'POST',
+                    contentType: 'application/json',
+                    data: JSON.stringify(data), // JSON 형식으로 데이터 변환
+                    success: function (response) {
+                        $('#registModal').modal('hide');
+                        location.reload()
+                    },
+                    error: function (xhr, status, error) {
+                        // 오류 처리
+                        console.error("Error: ", error);
+                    }
+                });
+            }
+        });
+
+
+    </script>
+</div>
+</body>
+</html>

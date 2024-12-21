@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout/default}">
+<!-- Content Wrapper. Contains page content -->
+<div class="content-wrapper" layout:fragment="content">    <!-- Content Wrapper. Contains page content -->
+    <!-- Content Header (Page header) -->
+    <section class="content-header">
+        <div class="container-fluid">
+            <div class="row mb-2">
+                <div class="col-sm-6">
+                    <h1>참여한 레슨</h1>
+                </div>
+                <!--<div class="col-sm-6">-->
+                    <!--<ol class="breadcrumb float-sm-right">-->
+                        <!--<li class="breadcrumb-item"><a href="#">Home</a></li>-->
+                        <!--<li class="breadcrumb-item active">레슨 목록</li>-->
+                    <!--</ol>-->
+                <!--</div>-->
+            </div>
+        </div><!-- /.container-fluid -->
+    </section>
+
+    <!-- Main content -->
+    <section class="content">
+        <div class="row" id="lessonCards">
+        </div>
+    </section>
+
+
+    <!-- /.content -->
+    <!-- /.content-wrapper -->
+
+    <!-- /.control-sidebar -->
+    <!-- Page specific script -->
+    <script th:inline="javascript">
+        /*<![CDATA[*/
+        var lessons = [[${lessons}]];
+        /*]]>*/
+
+    </script>
+
+    <script>
+        $(function () {
+            lessons.forEach(function(lesson) {
+                var cardHtml = '<div class="col-md-4 mb-4">' +
+                    '<div class="card card-custom">' +
+                    '<img src="../../dist/img/profile' + lesson.lessonId + '.jpg" class="card-img-top card-img-top-custom" alt="프로 사진">' +
+                    '<div class="card-body">' +
+                    '<h5 class="card-title">' + lesson.lessonName + '</h5>' +
+                    '<p class="card-text">' + lesson.proName + ' - ' + lessonTypeToString(lesson.lessonType) + '</p>' +
+                    '<p class="card-text">남은 횟수: ' + lesson.remainingCount + '</p>' +
+                    '</div>' +
+                    '</div>' +
+                    '</div>';
+                $('#lessonCards').append(cardHtml);
+            });
+        });
+
+
+
+
+        function lessonTypeToString(type) {
+            switch (type) {
+                case 0:
+                    return "그룹";
+                case 1:
+                    return "개인";
+                default:
+                    return "알 수 없음";
+            }
+        }
+
+        function lessonPropertyToString(property) {
+            switch (property) {
+                case 0:
+                    return "기본";
+                case 1:
+                    return "무료";
+                default:
+                    return "알 수 없음";
+            }
+        }
+    </script>
+</div>
+</body>
+</html>

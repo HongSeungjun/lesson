@@ -1,0 +1,18 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>lesson</title>
+    <th:block th:replace="~{layout/fragment/resources :: resourcesFragment}" />
+</head>
+<body class="hold-transition sidebar-mini">
+
+    <div th:replace="~{layout/fragment/header :: headerFragment}" />
+
+
+    <th:block  layout:fragment="content" />
+    <footer class="main-footer"  th:replace="~{layout/fragment/footer :: footerFragment}"></footer>
+</body>
+</html>

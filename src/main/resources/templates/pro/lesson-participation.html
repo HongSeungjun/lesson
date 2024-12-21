@@ -1,0 +1,527 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout/default}">
+<div class="content-wrapper" layout:fragment="content">    <!-- Content Wrapper. Contains page content -->
+    <!-- Content Header (Page header) -->
+    <section class="content-header">
+        <div class="container-fluid">
+            <div class="row mb-2">
+                <div class="col-sm-6">
+                    <h1>레슨 정보</h1>
+                </div>
+                <div class="col-sm-6">
+                    <ol class="breadcrumb float-sm-right">
+                        <li class="breadcrumb-item"><a href="#">Home</a></li>
+                        <li class="breadcrumb-item active">레슨 정보</li>
+                    </ol>
+
+                </div>
+            </div>
+        </div><!-- /.container-fluid -->
+    </section>
+
+    <!-- Main content -->
+    <section class="content">
+        <div class="card">
+            <div class="card-header">
+                <h3 class="card-title">레슨 목록</h3>
+                <button type="button" class="btn btn-secondary float-right" id="test" data-toggle="modal"
+                        data-target="#registModal"><i class="fas fa-plus"></i> 참여자 등록
+                </button>
+            </div>
+            <!-- /.card-header -->
+            <div class="card-body">
+                <div id="jsGrid1"></div>
+            </div>
+            <!-- /.card-body -->
+        </div>
+        <!-- /.card -->
+    </section>
+
+    <section class="content">
+        <div class="card">
+            <div class="card-header">
+                <h3 class="card-title">예약 요청</h3>
+            </div>
+            <!-- /.card-header -->
+            <div class="card-body">
+                <div id="jsGrid3"></div>
+            </div>
+            <!-- /.card-body -->
+        </div>
+        <!-- /.card -->
+    </section>
+
+    <section class="content">
+        <div class="card">
+            <div class="card-header">
+                <h3 class="card-title">예약 변경 요청</h3>
+            </div>
+            <!-- /.card-header -->
+            <div class="card-body">
+                <div id="jsGrid4"></div>
+            </div>
+            <!-- /.card-body -->
+        </div>
+        <!-- /.card -->
+    </section>
+
+    <section class="content">
+        <div class="card">
+            <div class="card-header">
+                <h3 class="card-title">취소 요청</h3>
+            </div>
+            <!-- /.card-header -->
+            <div class="card-body">
+                <div id="jsGrid2"></div>
+            </div>
+            <!-- /.card-body -->
+        </div>
+        <!-- /.card -->
+    </section>
+
+    <!-- /.content -->
+    <!-- /.content-wrapper -->
+
+    <!-- ./wrapper -->
+    <!-- Modal -->
+    <div class="modal fade" id="registModal" tabindex="-1" role="dialog" aria-labelledby="registModalLabel"
+         aria-hidden="true">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="registModalLabel">참여자 등록</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <div class="card-body">
+                        <div class="form-group">
+                            <label for="loginId">회원 ID</label>
+                            <input type="text" class="form-control" id="loginId" placeholder="회원의 ID를 입력하세요.">
+                        </div>
+                        <div class="form-group">
+                            <label for="remainingCount">이용권 횟수</label>
+                            <input type="number" class="form-control" id="remainingCount" placeholder="이용권 횟수를 입력하세요.">
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">취소</button>
+                    <button type="button" class="btn btn-primary" onclick="registerParticipation()">등록</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Page specific script -->
+    <script th:inline="javascript">
+        /*<![CDATA[*/
+        var participations = [[${participations}]];
+        var lessonId = [[${lessonId}]];
+        /*]]>*/
+    </script>
+
+    <script>
+        $(function () {
+            $("#jsGrid1").jsGrid({
+                height: "auto",
+                width: "100%",
+
+                paging: true,
+
+                data: participations,
+
+                fields: [
+                    {name: "loginId", title: "회원 아이디", type: "text", width: 100},
+                    {name: "name", title: "회원 이름", type: "text", width: 100},
+                    // {name: "remainingCount", title: "이용권 횟수", type: "number", width: 100},
+                    {
+                        name: "remainingCount",
+                        title: "이용권 횟수",
+                        type: "number",
+                        width: 100,
+                        itemTemplate: function (value, item) {
+                            var $input = $("<input>")
+                                .attr("type", "number")
+                                .addClass("form-control")
+                                .val(value)
+                                .change(function () {
+                                    var requestData = {
+                                        count: $(this).val(),
+                                        participationId: item.participationId
+                                    };
+                                    $.ajax({
+                                        type: "PATCH",
+                                        url: "/api/participation",
+                                        contentType: "application/json",
+                                        data: JSON.stringify(requestData),
+                                        success: function (response) {
+                                            console.log(response)
+                                        },
+                                        error: function (response) {
+                                            $(document).Toasts('create', {
+                                                title: 'ERROR',
+                                                body: response.responseJSON.message,
+                                                autohide: true
+                                            })
+                                        }
+                                    });
+                                });
+                            return $input;
+                        }
+                    },
+                    {name: "createDate", title: "등록일", type: "text", width: 100},
+                    {
+                        name: "delete",
+                        title: "회원 관리",
+                        width: 50,
+                        itemTemplate: function (_, item) {
+                            var $button = $("<button>")
+                                .addClass("btn btn-sm btn-secondary")
+                                .text("삭제")
+                                .click(function (e) {
+                                    $.ajax({
+                                        type: "DELETE",
+                                        url: "/api/participation/" + item.participationId,
+                                        contentType: "application/json",
+                                        success: function (response) {
+                                            console.log(response)
+                                            location.reload()
+                                        },
+                                        error: function (response) {
+                                            $(document).Toasts('create', {
+                                                title: 'ERROR',
+                                                body: response.responseJSON.message,
+                                                autohide: true
+                                            })
+                                        }
+                                    });
+                                });
+
+                            return $("<div>").append($button);
+                        }
+                    }
+                ],
+
+            });
+        });
+
+        // 모달
+        $('#registModal').on('shown.bs.modal', function () {
+        })
+
+        function registerParticipation() {
+            var loginId = document.getElementById('loginId').value;
+            var remainingCount = document.getElementById('remainingCount').value;
+            var requestData = {
+                lessonId: lessonId,
+                loginId: loginId,
+                count: remainingCount
+            };
+
+            $.ajax({
+                type: "POST",
+                url: "/api/participation",
+                contentType: "application/json",
+                data: JSON.stringify(requestData),
+                success: function (response) {
+                    $('#registModal').modal('hide');
+
+                    location.reload();
+
+                },
+                error: function (response) {
+                    $(document).Toasts('create', {
+                        title: 'ERROR',
+                        body: response.responseJSON.message,
+                        autohide: true
+                    })
+                }
+            });
+        }
+
+        $(function () {
+            $.ajax({
+                url: '/api/reservation/cancelled/' + lessonId,
+                dataType: "json",
+                success: function (response) {
+                    $("#jsGrid2").jsGrid({
+                        height: "auto",
+                        width: "100%",
+                        paging: true,
+                        data: response.data,
+                        fields: [
+                            {name: "scheduleName", title: "스케줄 명", type: "text", width: 100},
+                            {name: "memberName", title: "회원 명", type: "text", width: 100},
+                            {name: "memberLoginId", title: "회원 아이디", type: "text", width: 100},
+                            {name: "schedule", title: "일정", type: "text", width: 150, itemTemplate: formatSchedule},
+                            {name: "cancelReason", title: "취소 사유", type: "text", width: 100},
+
+                            {
+                                name: "reservationId",
+                                title: "예약 관리",
+                                width: 50,
+                                itemTemplate: function (_, item) {
+                                    var $approveButton = $("<button>")
+                                        .addClass("btn btn-sm btn-secondary")
+                                        .text("승인")
+                                        .click(function (e) {
+                                            $.ajax({
+                                                type: "PATCH",
+                                                url: "/api/reservation/" + item.reservationId + "/approve-cancellation",
+                                                contentType: "application/json",
+                                                success: function (response) {
+                                                    console.log(response);
+                                                    location.reload();
+                                                },
+                                                error: function (response) {
+                                                    $(document).Toasts('create', {
+                                                        title: 'ERROR',
+                                                        body: response.responseJSON.message,
+                                                        autohide: true
+                                                    });
+                                                }
+                                            });
+                                        });
+
+                                    var $rejectButton = $("<button>")
+                                        .addClass("btn btn-sm btn-danger")
+                                        .text("거절")
+                                        .click(function (e) {
+                                            $.ajax({
+                                                type: "PATCH",
+                                                url: "/api/reservation/" + item.reservationId + "/reject-cancellation",
+                                                contentType: "application/json",
+                                                success: function (response) {
+                                                    console.log(response);
+                                                    location.reload();
+                                                },
+                                                error: function (response) {
+                                                    $(document).Toasts('create', {
+                                                        title: 'ERROR',
+                                                        body: response.responseJSON.message,
+                                                        autohide: true
+                                                    });
+                                                }
+                                            });
+                                        });
+
+                                    return $("<div>").append($approveButton).append($rejectButton);
+                                }
+                            }
+                        ]
+                    });
+                },
+                error: function () {
+                    // 데이터 로드 실패 처리
+                    console.error("Data loading failed");
+                }
+            });
+        });
+
+        function formatDateTime(start, end) {
+            var formatDate = function (date) {
+                var d = new Date(date),
+                    month = '' + (d.getMonth() + 1),
+                    day = '' + d.getDate(),
+                    year = d.getFullYear(),
+                    hour = d.getHours(),
+                    minute = d.getMinutes();
+
+                if (month.length < 2) month = '0' + month;
+                if (day.length < 2) day = '0' + day;
+                if (minute < 10) minute = '0' + minute;
+
+                return [year, month, day].join('/') + ' ' + hour + ':' + minute;
+            };
+
+            return formatDate(start) + " ~ " + formatDate(end).split(' ')[1];
+        }
+
+
+        $(function () {
+            $.ajax({
+                url: '/api/reservation/private/request-change/' + lessonId,
+                dataType: "json",
+                success: function (response) {
+                    $("#jsGrid4").jsGrid({
+                        height: "auto",
+                        width: "100%",
+                        paging: true,
+                        data: response.data,
+                        fields: [
+                            {
+                                name: "originStart",
+                                title: "변경 전",
+                                itemTemplate: function (_, item) {
+                                    return formatDateTime(item.originStart, item.originEnd);
+                                }
+                            },
+                            {
+                                name: "requestStart",
+                                title: "변경 후",
+                                itemTemplate: function (_, item) {
+                                    return formatDateTime(item.requestStart, item.requestEnd);
+                                }
+                            },
+                            {name: "reason", title: "사유", type: "text", width: 100},
+                            {
+                                name: "changeId",
+                                title: "예약 관리",
+                                width: 50,
+                                itemTemplate: function (_, item) {
+                                    var $approveButton = $("<button>")
+                                        .addClass("btn btn-sm btn-secondary")
+                                        .text("승인")
+                                        .click(function (e) {
+                                            $.ajax({
+                                                type: "PATCH",
+                                                url: "/api/reservation/private/approve-change/" + item.changeId,
+                                                contentType: "application/json",
+                                                success: function (response) {
+                                                    console.log(response);
+                                                },
+                                                error: function (response) {
+                                                    $(document).Toasts('create', {
+                                                        title: 'ERROR',
+                                                        body: response.responseJSON.message,
+                                                        autohide: true
+                                                    });
+                                                }
+                                            });
+                                        });
+
+                                    var $rejectButton = $("<button>")
+                                        .addClass("btn btn-sm btn-danger")
+                                        .text("거절")
+                                        .click(function (e) {
+                                            $.ajax({
+                                                type: "PATCH",
+                                                url: "/api/reservation/private/reject-change/" + item.changeId,
+                                                contentType: "application/json",
+                                                success: function (response) {
+                                                    console.log(response);
+                                                    // location.reload();
+                                                },
+                                                error: function (response) {
+                                                    $(document).Toasts('create', {
+                                                        title: 'ERROR',
+                                                        body: response.responseJSON.message,
+                                                        autohide: true
+                                                    });
+                                                }
+                                            });
+                                        });
+
+                                    return $("<div>").append($approveButton).append($rejectButton);
+                                }
+                            }
+                        ]
+                    });
+                },
+                error: function () {
+                    // 데이터 로드 실패 처리
+                    console.error("Data loading failed");
+                }
+            });
+        });
+
+        $(function () {
+            $.ajax({
+                url: '/api/reservation/private/' + lessonId,
+                dataType: "json",
+                success: function (response) {
+                    $("#jsGrid3").jsGrid({
+                        height: "auto",
+                        width: "100%",
+                        paging: true,
+                        data: response.data,
+                        fields: [
+                            {name: "lessonName", title: "레슨 명", type: "text", width: 100},
+                            {name: "schedule", title: "일정", type: "text", width: 150, itemTemplate: formatSchedule},
+
+                            {
+                                name: "reservationId",
+                                title: "예약 관리",
+                                width: 50,
+                                itemTemplate: function (_, item) {
+                                    var $approveButton = $("<button>")
+                                        .addClass("btn btn-sm btn-secondary")
+                                        .text("승인")
+                                        .click(function (e) {
+                                            $.ajax({
+                                                type: "PATCH",
+                                                url: "/api/reservation/private/" + item.reservationId,
+                                                contentType: "application/json",
+                                                success: function (response) {
+                                                    console.log(response);
+                                                },
+                                                error: function (response) {
+                                                    $(document).Toasts('create', {
+                                                        title: 'ERROR',
+                                                        body: response.responseJSON.message,
+                                                        autohide: true
+                                                    });
+                                                }
+                                            });
+                                        });
+
+                                    var $rejectButton = $("<button>")
+                                        .addClass("btn btn-sm btn-danger")
+                                        .text("거절")
+                                        .click(function (e) {
+                                            $.ajax({
+                                                type: "DELETE",
+                                                url: "/api/reservation/private/" + item.reservationId,
+                                                contentType: "application/json",
+                                                success: function (response) {
+                                                    console.log(response);
+                                                    // location.reload();
+                                                },
+                                                error: function (response) {
+                                                    $(document).Toasts('create', {
+                                                        title: 'ERROR',
+                                                        body: response.responseJSON.message,
+                                                        autohide: true
+                                                    });
+                                                }
+                                            });
+                                        });
+
+                                    return $("<div>").append($approveButton).append($rejectButton);
+                                }
+                            }
+                        ]
+                    });
+                },
+                error: function () {
+                    // 데이터 로드 실패 처리
+                    console.error("Data loading failed");
+                }
+            });
+        });
+
+        function formatSchedule(value, item) {
+            var startDate = new Date(item.start);
+            var endDate = new Date(item.end);
+
+            console.log(item)
+            // 'yy-MM-dd HH:mm' 형식으로 날짜 포맷팅
+            var startStr = startDate.toLocaleString('ko-KR', {
+                year: '2-digit',
+                month: '2-digit',
+                day: '2-digit',
+                hour: '2-digit',
+                minute: '2-digit'
+            }).replace(/\./g, '-');
+            var endStr = endDate.toLocaleString('ko-KR', {hour: '2-digit', minute: '2-digit'});
+
+            return startStr + ' ~ ' + endStr.slice(-5);
+        }
+
+    </script>
+</div>
+</body>
+</html>

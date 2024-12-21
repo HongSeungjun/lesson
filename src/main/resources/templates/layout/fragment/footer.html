@@ -1,0 +1,15 @@
+<footer class="main-footer" th:fragment="footerFragment">
+    <div class="pull-right hidden-xs">lesson 레슨매칭</div>
+    <strong>Copyright &copy; <a href="#">lesson</a>.</strong> All rights reserved.
+    <script>
+        function active_menu(target_menu) {
+            if (target_menu.length > 0 && !target_menu.hasClass("active")) {
+                target_menu.addClass("active")
+                return active_menu(target_menu.parents("li"));
+            }
+        }
+        active_menu($(".sidebar-menu li a[href='" + location.pathname + "']"));
+    </script>
+
+</footer>
+

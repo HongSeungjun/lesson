@@ -1,0 +1,97 @@
+spring:
+  config:
+    activate:
+      on-profile: local
+    import: application-db.yml
+  datasource:
+    web:
+      hikari:
+        pool-name: web-lesson-pool
+        maximum-pool-size: 10
+        transaction-isolation: TRANSACTION_REPEATABLE_READ
+        driver-class-name: com.mysql.cj.jdbc.Driver
+        jdbc-url: jdbc:mysql://localhost:3306/lesson?useSSL=false&serverTimezone=UTC
+
+  jpa:
+    hibernate:
+      ddl-auto: create
+    show-sql: true
+    properties:
+      hibernate:
+        format_sql: true
+        dialect: org.hibernate.dialect.MySQL8Dialect
+        hbm2ddl:
+          auto: create
+  thymeleaf:
+    cache: false
+    check-template: true
+    check-template-location: true
+    enabled: true
+    encoding: UTF-8
+    mode: HTML
+    prefix: file:src/main/resources/templates/
+    suffix: .html
+    servlet:
+      content-type: text/html
+      multipart:
+        enabled: true
+        max-file-size: 10MB
+        max-request-size: 10MB
+  logging:
+    level:
+      root: info
+      database: trace
+      org:
+        springframework:
+          boot: info
+          security: debug
+        web: info
+        com.join.lesson: debug
+    group:
+      database:
+        - org.springframework.data.redis
+        - org.springframework.orm.jpa
+        - org.springframework.transaction
+        - org.mybatis.spring.transaction
+        - org.springframework.jdbc
+        - org.mybatis.spring.SqlSessionUtils
+        - com.microsoft.sqlserver.jdbc
+        - com.zaxxer.hikari
+---
+spring:
+  config:
+    activate:
+      on-profile: dev
+  datasource:
+    driver-class-name: org.h2.Driver
+    url: jdbc:h2:mem:testdb
+    username: sa
+    password:
+  h2:
+    console:
+      enabled: true
+      path: /h2-console
+  jpa:
+    generate-ddl: true
+    hibernate:
+      ddl-auto: create
+    properties:
+      hibernate:
+        show_sql: true
+        format_sql: true
+        use_sql_comments: true
+  thymeleaf:
+    cache: false
+    check-template: true
+    check-template-location: true
+    enabled: true
+    encoding: UTF-8
+    mode: HTML
+    prefix: file:src/main/resources/templates/
+    suffix: .html
+    servlet:
+      content-type: text/html
+  logging:
+    level:
+      org.hibernate.SQL: debug
+      org.hibernate.type: trace

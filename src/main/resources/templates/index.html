@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout/default}">
+<head>
+    <!-- 여기에 기존 head 태그 내용을 포함하시면 됩니다. -->
+    <style>
+        .background-image-container {
+            position: relative;
+            width: 100%;
+            height: 1000px; /* 이미지의 높이를 지정하세요 */
+            background-image: url('../dist/img/main.png');
+            background-size: cover;
+            background-position: center;
+        }
+
+        .overlay-text {
+            position: absolute;
+            top: 30%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            color: #2E9AFE; /* 텍스트 색상을 지정하세요 */
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+<div class="content-wrapper" layout:fragment="content">
+    <!-- 여기에 기존 content-wrapper 태그 내용을 포함하시면 됩니다. -->
+
+    <!-- 배경 이미지와 텍스트가 포함된 새로운 섹션 -->
+    <div class="background-image-container">
+        <div class="overlay-text">
+            <h1></h1>
+            <p></p>
+        </div>
+    </div>
+
+    <!-- 여기에 기존 Modal 및 Script 태그 내용을 포함하시면 됩니다. -->
+</div>
+</body>
+</html>

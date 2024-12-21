@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout/default}">
+<div class="content-wrapper" layout:fragment="content">    <!-- Content Wrapper. Contains page content -->
+    <!-- Content Header (Page header) -->
+    <section class="content-header">
+        <div class="container-fluid">
+            <div class="row mb-2">
+                <div class="col-sm-6">
+                    <h1>나의 일정</h1>
+                </div>
+                <!--<div class="col-sm-6">-->
+                    <!--<ol class="breadcrumb float-sm-right">-->
+                        <!--<li class="breadcrumb-item"><a href="/">Home</a></li>-->
+                        <!--<li class="breadcrumb-item active">나의 일정</li>-->
+                    <!--</ol>-->
+                <!--</div>-->
+            </div>
+        </div><!-- /.container-fluid -->
+    </section>
+
+    <!-- Main content -->
+    <section class="content">
+        <div class="container-fluid">
+            <div class="row">
+                <div class="col-md-1"></div>
+                <div class="col-md-10">
+                    <div class="card card-primary">
+                        <div class="card-body p-0">
+                            <!-- THE CALENDAR -->
+                            <div id="calendar"></div>
+                        </div>
+                        <!-- /.card-body -->
+                    </div>
+                    <!-- /.card -->
+                </div>
+                <!-- /.col -->
+            </div>
+            <!-- /.row -->
+        </div><!-- /.container-fluid -->
+    </section>
+    <!-- /.content -->
+    <!-- ./content-wrapper -->
+
+    <!-- Modal -->
+    <div class="modal fade" id="myModal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="myModalLabel"></h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body" id="modalContent">
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">닫기</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        $(function () {
+
+            /* initialize the external events
+             -----------------------------------------------------------------*/
+            function ini_events(ele) {
+                ele.each(function () {
+
+                    // create an Event Object (https://fullcalendar.io/docs/event-object)
+                    // it doesn't need to have a start or end
+                    var eventObject = {
+                        title: $.trim($(this).text()) // use the element's text as the event title
+                    }
+
+                    // store the Event Object in the DOM element so we can get to it later
+                    $(this).data('eventObject', eventObject)
+
+                    // make the event draggable using jQuery UI
+                    $(this).draggable({
+                        zIndex: 1070,
+                        revert: true, // will cause the event to go back to its
+                        revertDuration: 0  //  original position after the drag
+                    })
+
+                })
+            }
+
+            ini_events($('#external-events div.external-event'))
+
+            /* initialize the calendar
+             -----------------------------------------------------------------*/
+            //Date for the calendar events (dummy data)
+            var date = new Date()
+            var d = date.getDate(),
+                m = date.getMonth(),
+                y = date.getFullYear()
+
+            var Calendar = FullCalendar.Calendar;
+            var Draggable = FullCalendar.Draggable;
+
+            var checkbox = document.getElementById('drop-remove');
+            var calendarEl = document.getElementById('calendar');
+
+            // initialize the external events
+            // -----------------------------------------------------------------
+
+            var calendar = new Calendar(calendarEl, {
+                locale:'ko',
+                headerToolbar: {
+                    left: 'prev',
+                    center: 'title',
+                    right: 'next'
+                },
+                eventTimeFormat: { // 이벤트 시간 형식을 24시간제로 설정
+                    hour: '2-digit',
+                    minute: '2-digit',
+                    hour12: false
+                },
+                views: {
+                    dayGridMonth: { // 'dayGridMonth' 뷰에 대한 타이틀 형식
+                        titleFormat: { month: 'numeric', year: 'numeric'  }
+                    }
+                },
+                themeSystem: 'bootstrap',
+                events: function (fetchInfo, successCallback, failureCallback) {
+                    $.ajax({
+                        url: '/api/reservation',
+                        type: 'GET',
+                        success: function (response) {
+                            var events = convertToEvents(response);
+                            successCallback(events);
+                        },
+                        error: function () {
+                            failureCallback();
+                        }
+                    });
+                },
+                editable: false,
+                droppable: false,
+                contentHeight: 'auto',
+
+                eventClick: function (info) {
+                    var eventId = info.event.extendedProps.scheduleId;
+                    console.log(info.event)
+                    var eventTitle = info.event.extendedProps.lessonName + " - " + info.event.extendedProps.title;
+
+
+                    $('#myModalLabel').text(eventTitle);
+                    showModal();
+
+                    console.log(eventId);
+                    $.ajax({
+                        url: '/api/record/' + eventId,
+                        type: 'GET',
+                        success: function (response) {
+                            // 서버에서 받은 게시글 내용으로 모달 창 업데이트
+                            if(response && response.data && response.data.content) {
+                                console.log(response.data.content)
+                                updateModalContent(response.data.content);
+                            } else {
+                                // 데이터가 없을 경우 메시지 표시
+                                updateModalContent("등록되지 않았습니다");
+                            }
+                        },
+                        error: function (response) {
+                            // 요청 실패 시 메시지 표시
+                            updateModalContent("등록되지 않았습니다");
+                        }
+                    });
+                }
+            });
+
+            calendar.render();
+            // 색 맵핑
+            var lessonColorMapping = {
+                1: "#0C356A",
+                2: "#0174BE",
+                3: "#FFC436",
+                4: "#FFF0CE"
+            };
+
+            function convertToEvents(serverResponse) {
+                return serverResponse.data.map(function (event) {
+                    var color = lessonColorMapping[event.lessonId] || "#000000"; // 매핑된 색상 또는 기본 색상
+                    console.log(event)
+                    return {
+                        start: event.start,
+                        end: event.end,
+                        allDay: false,
+                        color: color,
+                        extendedProps: {
+                            scheduleId: event.scheduleId,
+                            lessonName: event.lessonName,
+                            title: event.title,
+                        }
+                    };
+                });
+            }
+
+            function updateModalContent(content) {
+                // 모달 내용을 업데이트하는 코드
+                $('#modalContent').html(content);
+            }
+
+            function showModal() {
+                // 모달 창을 표시하는 코드
+                $('#myModal').modal('show');
+            }
+        })
+    </script>
+
+</div>
+</body>
+</html>

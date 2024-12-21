@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout/default}">
+<!-- Content Wrapper. Contains page content -->
+<div class="content-wrapper" layout:fragment="content">    <!-- Content Wrapper. Contains page content -->
+    <!-- Content Header (Page header) -->
+    <section class="content-header">
+        <div class="container-fluid">
+            <div class="row mb-2">
+                <div class="col-sm-6">
+                    <h1>예약 관리</h1>
+                </div>
+                <!--<div class="col-sm-6">-->
+                    <!--<ol class="breadcrumb float-sm-right">-->
+                        <!--<li class="breadcrumb-item"><a href="#">Home</a></li>-->
+                        <!--<li class="breadcrumb-item active"> 예약 내역</li>-->
+                    <!--</ol>-->
+                <!--</div>-->
+            </div>
+        </div><!-- /.container-fluid -->
+    </section>
+
+    <!-- Main content -->
+    <section class="content">
+        <div class="card">
+            <div class="card-header">
+                <h3 class="card-title">예약 관리</h3>
+            </div>
+            <!-- /.card-header -->
+            <div class="card-body">
+                <div id="jsGrid1"></div>
+            </div>
+            <!-- /.card-body -->
+        </div>
+        <!-- /.card -->
+    </section>
+
+
+    <!-- /.content -->
+    <!-- /.content-wrapper -->
+
+    <!-- /.control-sidebar -->
+    <!-- Page specific script -->
+    <script th:inline="javascript">
+        /*<![CDATA[*/
+        var reservations = [[${reservations}]];
+        /*]]>*/
+
+        console.log(reservations)
+    </script>
+
+    <script>
+        $(function () {
+            $("#jsGrid1").jsGrid({
+                height: "auto",
+                width: "100%",
+
+                paging: true,
+
+                data: reservations,
+
+                fields: [
+                    {name: "lessonName", title: "레슨 명", type: "text", width: 100},
+                    {name: "title", title: "스케줄 명", type: "text", width: 100},
+                    // 숨겨진 시작시간과 종료시간 필드
+                    {name: "start", type: "text", visible: false},
+                    {name: "end", type: "text", visible: false},
+                    {
+                        name: "state",
+                        title: "예약 상태",
+                        type: "number",
+                        itemTemplate: function (value) {
+                            return ReservationStateToString(value);
+                        },
+                        width: 50
+                    },
+                    {name: "schedule", title: "일정", type: "text", width: 150, itemTemplate: formatSchedule},
+                    {
+                        name: "delete",
+                        title: "예약 관리",
+                        width: 50,
+                        itemTemplate: function (_, item) {
+                            var $button = $("<button>")
+                                .addClass("btn btn-secondary")
+                                .text("취소")
+                                .click(function (e) {
+                                    var reason = prompt("취소 사유를 입력하세요:");
+                                    if (reason) {
+                                        $.ajax({
+                                            type: "PATCH",
+                                            url: "/api/reservation",
+                                            contentType: "application/json",
+                                            data: JSON.stringify({
+                                                reservationId: item.reservationId,
+                                                reason: reason
+                                            }),
+                                            success: function (response) {
+                                                console.log(response)
+                                                location.reload()
+                                            },
+                                            error: function (response) {
+                                                $(document).Toasts('create', {
+                                                    title: 'ERROR',
+                                                    body: response.responseJSON.message,
+                                                    autohide: true
+                                                })
+                                            }
+                                        });
+                                    }
+                                });
+
+                            return $("<div>").append($button);
+                        }                    }
+                ],
+
+                rowClick: function (args) {
+
+                }
+            });
+        });
+        function ReservationStateToString(type) {
+            switch (type) {
+                case 0:
+                    return "수업 전";
+                case 1:
+                    return "수업 완료";
+                default:
+                    return "취소 대기";
+            }
+        }
+
+        function formatSchedule(value, item) {
+            var startDate = new Date(item.start);
+            var endDate = new Date(item.end);
+
+            // 'yy-MM-dd HH:mm' 형식으로 날짜 포맷팅
+            var startStr = startDate.toLocaleString('ko-KR', {
+                year: '2-digit',
+                month: '2-digit',
+                day: '2-digit',
+                hour: '2-digit',
+                minute: '2-digit'
+            }).replace(/\./g, '-');
+            var endStr = endDate.toLocaleString('ko-KR', {hour: '2-digit', minute: '2-digit'});
+
+            return startStr + ' ~ ' + endStr.slice(-5);
+        }
+
+        function lessonTypeToString(type) {
+            switch (type) {
+                case 0:
+                    return "그룹";
+                case 1:
+                    return "개인";
+                default:
+                    return "알 수 없음";
+            }
+        }
+
+        function lessonPropertyToString(property) {
+            switch (property) {
+                case 0:
+                    return "기본";
+                case 1:
+                    return "무료";
+                default:
+                    return "알 수 없음";
+            }
+        }
+    </script>
+</div>
+</body>
+</html>

@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout/default}">
+<div class="content-wrapper" layout:fragment="content">    <!-- Content Wrapper. Contains page content -->
+    <!-- Content Header (Page header) -->
+    <section class="content-header">
+        <div class="container-fluid">
+            <div class="row mb-2">
+                <div class="col-sm-6">
+                    <h1>레슨 일지 작성</h1>
+                </div>
+                <div class="col-sm-6">
+                    <ol class="breadcrumb float-sm-right">
+                        <li class="breadcrumb-item"><a href=".">Home</a></li>
+                        <li class="breadcrumb-item active">레슨 일지</li>
+                    </ol>
+                </div>
+            </div>
+        </div><!-- /.container-fluid -->
+    </section>
+
+    <!-- Main content -->
+    <section class="content">
+        <div class="row">
+            <div class="col-md-12">
+                <div class="card card-outline card-info">
+                    <div class="card-header">
+                        <h3 class="card-title">
+
+                        </h3>
+                        <button id="saveButton" class="btn btn-success btn-lg">저장</button>
+                    </div>
+                    <!-- /.card-header -->
+                    <div class="card-body">
+              <textarea id="summernote">
+              </textarea>
+
+                    </div>
+                </div>
+                <!-- /.col-->
+            </div>
+            <!-- ./row -->
+        </div>
+    </section>
+
+    <script>
+        $(function () {
+            // Summernote
+            $('#summernote').summernote({
+                // 에디터 높이
+                height: 600,
+                // 에디터 한글 설정
+                lang: "ko-KR",
+                // 에디터에 커서 이동 (input창의 autofocus라고 생각하시면 됩니다.)
+                focus: true,
+                toolbar: [
+                    // 글꼴 설정
+                    ['fontname', ['fontname']],
+                    // 글자 크기 설정
+                    ['fontsize', ['fontsize']],
+                    // 굵기, 기울임꼴, 밑줄,취소 선, 서식지우기
+                    ['style', ['bold', 'italic', 'underline', 'strikethrough', 'clear']],
+                    // 글자색
+                    ['color', ['forecolor', 'color']],
+                    // 표만들기
+                    ['table', ['table']],
+                    // 글머리 기호, 번호매기기, 문단정렬
+                    ['para', ['ul', 'ol', 'paragraph']],
+                    // 줄간격
+                    ['height', ['height']],
+                    // 그림첨부, 링크만들기, 동영상첨부
+                    ['insert', ['picture', 'link', 'video']],
+                ],
+                // 추가한 글꼴
+                fontNames: ['Arial', 'Arial Black', 'Comic Sans MS', 'Courier New', '맑은 고딕', '궁서', '굴림체', '굴림', '돋음체', '바탕체'],
+                // 추가한 폰트사이즈
+                fontSizes: ['8', '9', '10', '11', '12', '14', '16', '18', '20', '22', '24', '28', '30', '36', '50', '72'],
+                callbacks: {
+                    onImageUpload: function (files, editor, welEditable) {
+                        for (var i = 0; i < files.length; i++) {
+                            sendFile(files[i], this);
+                        }
+                    }
+                }
+
+            });
+
+
+        })
+
+        function sendFile(file, el) {
+            var form_data = new FormData();
+            form_data.append('file', file);
+            $.ajax({
+                data: form_data,
+                type: "POST",
+                url: '/api/uploadfile',
+                cache: false,
+                contentType: false,
+                enctype: 'multipart/form-data',
+                processData: false,
+                success: function (url) {
+                    console.log(url.data)
+                    $(el).summernote('insertImage', url.data, function ($image) {
+                        $image.css('width', "25%");
+                    });
+                }
+            });
+        }
+
+        $(document).ready(function () {
+            var dataExists = false;
+
+            function loadExistingData() {
+                $.ajax({
+                    url: '/api/record/' +  [[${scheduleId}]], // 서버에 기존 데이터 확인을 위한 요청 URL
+                    method: 'GET',
+                    success: function (data) {
+                        if (data) {
+                            dataExists = true;
+                            $('#summernote').summernote('code', data.data.content);
+                        }
+                    },
+                    error: function (error) {
+                        console.error("Error loading data", error);
+                        dataExists = false;
+
+                    }
+                });
+            }
+
+            $('#summernote').summernote();
+
+            loadExistingData(); // 기존 데이터 로드 실행
+
+            $('#saveButton').on('click', function () {
+                var content = $('#summernote').summernote('code');
+                var method = dataExists ? 'PATCH' : 'POST';
+                $.ajax({
+                    url: '/api/record/',
+                    method: method,
+                    contentType: 'application/json',
+                    data: JSON.stringify({
+                        content: content,
+                        scheduleId: [[${scheduleId}]],
+                    }),
+                    success: function (response) {
+                        window.location.href = '/schedule/calendar'
+                    },
+                    error: function (error) {
+                        console.log(content);
+
+                        console.log(error);
+                    }
+                });
+
+
+            });
+
+
+        });
+
+    </script>
+</div>
+</body>
+</html>
